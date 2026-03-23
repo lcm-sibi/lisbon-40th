@@ -1,0 +1,96 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+@theme {
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --color-cobalt: #2B4EFF;
+  --color-terracotta: #E8573A;
+  --color-sunshine: #FFD23F;
+  --color-hotpink: #FF2D87;
+  --color-sage: #7FAF4E;
+  --color-cream: #FFFAF5;
+  --color-navy: #0A1628;
+  --color-lilac: #9B59B6;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: #FFFAF5;
+  color: #0A1628;
+}
+
+#root { width: 100%; text-align: left; }
+h1, h2, h3 { font-family: var(--font-display); }
+
+/* ── Paper grain overlay ── slightly warmer/heavier than before ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.038;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='512' height='512' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* ── Section backgrounds ── */
+.tile-bg { background: #FFFAF5; }
+
+/* Guests — dot-grid paper */
+.dot-bg {
+  background-color: #FAFAF6;
+  background-image: radial-gradient(circle, rgba(10, 22, 40, 0.09) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* Map — travel journal ruled paper */
+.journal-bg {
+  background-color: #F7F3EB;
+  background-image:
+    linear-gradient(rgba(10, 22, 40, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(10, 22, 40, 0.018) 1px, transparent 1px);
+  background-size: 100% 32px, 32px 100%;
+}
+
+/* ── Scrapbook animations ── */
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50%       { transform: translateY(-8px) rotate(1.2deg); }
+}
+
+@keyframes sway {
+  0%, 100% { transform: rotate(-1.5deg); }
+  50%       { transform: rotate(1.5deg); }
+}
+
+.float-slow {
+  animation: floatSlow 7s ease-in-out infinite;
+}
+
+.sway {
+  animation: sway 4s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .float-slow,
+  .sway {
+    animation: none !important;
+  }
+}
+
+/* ── Leaflet ── */
+.leaflet-container {
+  border-radius: 16px;
+  font-family: var(--font-sans);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #FFFAF5; }
+::-webkit-scrollbar-thumb { background: #E8573A; border-radius: 4px; }

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="56" height="28" viewBox="0 0 56 28">
+  <!-- tail -->
+  <polygon points="0,14 9,5 9,23" fill="#3A85A0"/>
+  <!-- body -->
+  <ellipse cx="30" cy="14" rx="22" ry="12" fill="#5BB8D0"/>
+  <!-- belly highlight -->
+  <ellipse cx="30" cy="17" rx="17" ry="6" fill="#C2E8F4" opacity="0.45"/>
+  <!-- silver lateral stripe -->
+  <ellipse cx="30" cy="12" rx="18" ry="3" fill="#D8F0F8" opacity="0.55"/>
+  <!-- dorsal fin -->
+  <path d="M20,3 Q30,0 40,3 L38,10 Q30,7 22,10 Z" fill="#4AACC2"/>
+  <!-- pectoral fin -->
+  <path d="M34,14 Q38,19 34,22" stroke="#4AACC2" fill="#4AACC2" stroke-width="0"/>
+  <path d="M34,14 Q39,19 34,22 Q31,20 32,16 Z" fill="#4AACC2" opacity="0.7"/>
+  <!-- scales -->
+  <path d="M34,9 Q32,14 34,19" stroke="#3A85A0" fill="none" stroke-width="1.2" opacity="0.5"/>
+  <path d="M26,8 Q24,14 26,20" stroke="#3A85A0" fill="none" stroke-width="1.2" opacity="0.5"/>
+  <path d="M18,10 Q16,14 18,18" stroke="#3A85A0" fill="none" stroke-width="1.2" opacity="0.5"/>
+  <!-- eye -->
+  <circle cx="46" cy="11" r="4" fill="white"/>
+  <circle cx="47" cy="11" r="2.2" fill="#0d1b2a"/>
+  <circle cx="47.8" cy="10" r="0.8" fill="white"/>
+  <!-- mouth -->
+  <path d="M53,14 Q55,13 56,14" stroke="#2A6A80" fill="none" stroke-width="1.2"/>
+</svg>
