@@ -1,125 +1,92 @@
+import { useState, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { HeroStickers } from './CollageStickers'
+import HeroEditor from './HeroEditor'
+import { useMobile } from '../hooks/useMobile'
 
-// Decorative scrapbook elements clustered near the title
-function PostageStamp() {
-  return (
-    <div style={{
-      position: 'absolute',
-      top: -16,
-      right: -20,
-      width: 66,
-      height: 82,
-      background: '#FF2D87',
-      borderRadius: 3,
-      transform: 'rotate(7deg)',
-      boxShadow: '2px 3px 8px rgba(0,0,0,0.18)',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      outline: '3px dashed rgba(255,255,255,0.45)',
-      outlineOffset: '-6px',
-      zIndex: 4,
-      pointerEvents: 'none',
-    }}>
-      <span style={{ fontSize: '1.8rem', lineHeight: 1 }}>🇵🇹</span>
-      <span style={{
-        fontFamily: 'Playfair Display, serif',
-        fontSize: '0.5rem',
-        fontWeight: 900,
-        color: 'rgba(255,255,255,0.9)',
-        letterSpacing: '1.5px',
-        textTransform: 'uppercase',
-        marginTop: 4,
-      }}>Lisboa</span>
-    </div>
-  )
-}
+const editMode = new URLSearchParams(window.location.search).has('edit')
 
-function TapeStrip({ top, left, rotate, width = 80 }) {
-  return (
-    <div style={{
-      position: 'absolute',
-      top,
-      left,
-      width,
-      height: 22,
-      background: 'rgba(255, 243, 180, 0.78)',
-      transform: `rotate(${rotate}deg)`,
-      boxShadow: '1px 1px 4px rgba(0,0,0,0.08)',
-      zIndex: 4,
-      pointerEvents: 'none',
-      backdropFilter: 'blur(1px)',
-      borderRadius: 1,
-    }} />
-  )
-}
 
-function TornLabel({ text, bottom, left, rotate, color = '#E8573A' }) {
-  return (
-    <div style={{
-      position: 'absolute',
-      bottom,
-      left,
-      background: '#FFF8F0',
-      border: `1.5px solid ${color}`,
-      padding: '4px 12px',
-      transform: `rotate(${rotate}deg)`,
-      fontFamily: 'DM Sans, sans-serif',
-      fontSize: '0.62rem',
-      fontWeight: 700,
-      letterSpacing: '2.5px',
-      textTransform: 'uppercase',
-      color,
-      boxShadow: '2px 2px 0 rgba(0,0,0,0.08)',
-      zIndex: 4,
-      pointerEvents: 'none',
-      whiteSpace: 'nowrap',
-    }}>
-      {text}
-    </div>
-  )
-}
-
-function CircleSticker({ text, top, right, color = '#2B4EFF' }) {
-  return (
-    <div style={{
-      position: 'absolute',
-      top,
-      right,
-      width: 58,
-      height: 58,
-      borderRadius: '50%',
-      border: `2.5px solid ${color}`,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      transform: 'rotate(-12deg)',
-      zIndex: 4,
-      pointerEvents: 'none',
-      background: 'rgba(255,255,255,0.6)',
-      backdropFilter: 'blur(2px)',
-    }}>
-      <span style={{
-        fontFamily: 'DM Sans, sans-serif',
-        fontSize: '0.52rem',
-        fontWeight: 900,
-        letterSpacing: '1.5px',
-        textTransform: 'uppercase',
-        color,
-        textAlign: 'center',
-        lineHeight: 1.35,
-      }}>{text}</span>
-    </div>
-  )
+// ── Paste your copied offsets here to save positions permanently ──
+const CONTENT_OFFSETS = {
+  fortin:  { x: 161, y: -493 },
+  lisboa:  { x: 0, y: 0 },
+  content: { x: 0, y: 0 },
 }
 
 export default function Hero() {
+  const isMobile = useMobile()
+  const [positions, setPositions] = useState(CONTENT_OFFSETS)
+  const [copied, setCopied] = useState(null)
+  const activeDrag = useRef(null)
+
+  const startDrag = useCallback((key, e) => {
+    e.stopPropagation()
+    activeDrag.current = {
+      key,
+      startMX: e.clientX,
+      startMY: e.clientY,
+      startX: positions[key].x,
+      startY: positions[key].y,
+    }
+  }, [positions])
+
+  const onMouseMove = useCallback((e) => {
+    if (!activeDrag.current) return
+    const { key, startMX, startMY, startX, startY } = activeDrag.current
+    setPositions(prev => ({
+      ...prev,
+      [key]: { x: startX + e.clientX - startMX, y: startY + e.clientY - startMY },
+    }))
+  }, [])
+
+  const onMouseUp = useCallback(() => { activeDrag.current = null }, [])
+
+  const copyPos = (key) => {
+    const { fortin, lisboa, content } = positions
+    const all = `// Paste this into CONTENT_OFFSETS in Hero.jsx\nconst CONTENT_OFFSETS = {\n  fortin:  { x: ${Math.round(fortin.x)}, y: ${Math.round(fortin.y)} },\n  lisboa:  { x: ${Math.round(lisboa.x)}, y: ${Math.round(lisboa.y)} },\n  content: { x: ${Math.round(content.x)}, y: ${Math.round(content.y)} },\n}`
+    navigator.clipboard.writeText(all)
+    setCopied(key)
+    setTimeout(() => setCopied(null), 2000)
+  }
+
+  const dragStyle = (key, extraOutlineColor = '#FF2D87') => ({
+    cursor: 'grab',
+    transform: `translate(${positions[key].x}px, ${positions[key].y}px)`,
+    outline: `2px dashed ${extraOutlineColor}`,
+    outlineOffset: 10,
+    borderRadius: 8,
+    display: 'inline-block',
+    position: 'relative',
+  })
+
+  const CopyBtn = ({ k, color }) => (
+    <button
+      onMouseDown={e => e.stopPropagation()}
+      onClick={() => copyPos(k)}
+      style={{
+        display: 'block',
+        margin: '6px auto 0',
+        background: copied === k ? '#7FAF4E' : color,
+        color: '#fff',
+        border: 'none',
+        borderRadius: 6,
+        padding: '4px 12px',
+        fontSize: '0.65rem',
+        fontFamily: 'DM Sans, sans-serif',
+        fontWeight: 700,
+        cursor: 'pointer',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {copied === k ? '✓ Copied!' : `📋 (${Math.round(positions[k].x)}, ${Math.round(positions[k].y)})`}
+    </button>
+  )
+
   return (
     <section
       style={{
-        minHeight: '100vh',
+        minHeight: isMobile ? '100svh' : '100vh',
         background: '#FFFAF5',
         position: 'relative',
         // overflow visible so edge stickers can bleed into next section
@@ -128,6 +95,9 @@ export default function Hero() {
         alignItems: 'center',
         justifyContent: 'center',
       }}
+      onMouseMove={editMode ? onMouseMove : undefined}
+      onMouseUp={editMode ? onMouseUp : undefined}
+      onMouseLeave={editMode ? onMouseUp : undefined}
     >
       {/* Clipped background layer */}
       <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
@@ -144,107 +114,101 @@ export default function Hero() {
         }} />
       </div>
 
-      {/* Collage sticker layer — overflows into next section */}
-      <HeroStickers />
+      {/* Collage sticker layer */}
+      {editMode ? <HeroEditor /> : <HeroStickers />}
 
       {/* Main content */}
-      <div style={{ textAlign: 'center', padding: '0 24px', position: 'relative', zIndex: 2 }}>
+      <div style={isMobile ? {
+        position: 'absolute', inset: 0,
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'space-between',
+        zIndex: 2, padding: '120px 24px 52px',
+        pointerEvents: 'none',
+      } : {
+        position: 'absolute', top: '50%', left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 2, width: '100%',
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        textAlign: 'center', padding: '0 24px',
+      }}>
 
-        {/* Tape across the top of the block */}
-        <TapeStrip top={-10} left="38%" rotate={-2} width={100} />
-
-        {/* Tag line */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
+        {/* Main title */}
+        <motion.h1
+          initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.7, delay: 0.1 }}
           style={{
-            display: 'inline-block',
-            background: '#FF2D87',
-            color: '#fff',
-            fontWeight: 700,
-            fontSize: '0.85rem',
-            letterSpacing: '2px',
-            textTransform: 'uppercase',
-            padding: '6px 18px',
-            borderRadius: 100,
-            marginBottom: 24,
+            fontFamily: 'Playfair Display, serif',
+            fontSize: isMobile ? 'clamp(2rem, 9vw, 3rem)' : 'clamp(2.8rem, 7vw, 5.5rem)',
+            fontWeight: 900,
+            lineHeight: 1.05,
+            color: '#FF1A1A',
+            margin: 0,
+            letterSpacing: '-2px',
+            textShadow: 'none',
+            textAlign: 'center',
           }}
         >
-          May 13–17, 2026
-        </motion.div>
+          Emma's Bachelorette<br />in Lisboa
+        </motion.h1>
 
-        {/* "40 in" — with postage stamp tucked top-right */}
-        <div style={{ position: 'relative', display: 'inline-block' }}>
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
+        {/* Tag line + subtitle + pills — draggable in edit mode */}
+        <div
+          style={editMode ? { ...dragStyle('content', '#FF2D87'), display: 'block' } : isMobile ? {
+            background: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            width: '100%',
+          } : {
+            background: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            marginTop: 20,
+          }}
+          onMouseDown={editMode ? (e) => startDrag('content', e) : undefined}
+        >
+        {!editMode && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.1 }}
+            transition={{ duration: 0.6 }}
             style={{
-              fontFamily: 'Playfair Display, serif',
-              fontSize: 'clamp(3.5rem, 10vw, 8rem)',
-              fontWeight: 900,
-              lineHeight: 1.0,
-              color: '#0A1628',
-              margin: '0 0 8px',
-              letterSpacing: '-2px',
+              display: 'block',
+              width: 'fit-content',
+              margin: isMobile ? '0 auto 12px' : '0 0 12px',
+              background: '#FF2D87',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: '0.85rem',
+              letterSpacing: '2px',
+              textTransform: 'uppercase',
+              padding: '6px 18px',
+              borderRadius: 100,
             }}
           >
-            40 in
-          </motion.h1>
-          <PostageStamp />
-        </div>
-
-        {/* "Lisboa" — collage image */}
-        <div style={{ position: 'relative', display: 'inline-block' }}>
-          <motion.img
-            src={`${import.meta.env.BASE_URL}20.png`}
-            alt="Lisboa"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            style={{
-              width: 'clamp(260px, 50vw, 580px)',
-              height: 'auto',
-              margin: '0 auto',
-              display: 'block',
-              filter: 'drop-shadow(2px 4px 12px rgba(0,0,0,0.12))',
-            }}
-          />
-          <TapeStrip top={8} left="-24px" rotate={-4} width={64} />
-          <TornLabel text="Est. 2026" bottom={-4} left="12%" rotate={2} color="#E8573A" />
-          <CircleSticker text={"12\nfriends"} top={-20} right={-30} color="#2B4EFF" />
-        </div>
-
-        {/* Subtitle */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          style={{
-            fontSize: '1.25rem',
-            color: '#0A1628',
-            opacity: 0.7,
-            maxWidth: 500,
-            margin: '24px auto 48px',
-            lineHeight: 1.6,
-          }}
-        >
-          12 friends. 5 days. One city.
-          <br />A very good reason to celebrate.
-        </motion.p>
+            September 18–21, 2026
+          </motion.div>
+        )}
 
         {/* Stat pills */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}
+          style={{
+            display: 'flex',
+            flexWrap: isMobile ? 'wrap' : 'nowrap',
+            gap: isMobile ? 8 : 20,
+            justifyContent: 'center',
+            margin: isMobile ? '140px auto 0' : '24px 0 0',
+          }}
         >
           {[
-            { label: '12', sub: 'Friends', color: '#2B4EFF' },
-            { label: '5', sub: 'Days', color: '#E8573A' },
-            { label: '40', sub: 'Years of Lindsey', color: '#FF2D87' },
+            { label: '11', sub: 'Girls', color: '#00FF6A' },
+            { label: '4', sub: 'Days', color: '#FF5500' },
+            { label: '1', sub: 'Bride', color: '#FF2D87' },
             { label: '∞', sub: 'Pastéis de Nata', color: '#FFD23F' },
           ].map(({ label, sub, color }) => (
             <div
@@ -253,27 +217,36 @@ export default function Hero() {
                 background: '#fff',
                 border: `3px solid ${color}`,
                 borderRadius: 16,
-                padding: '16px 24px',
-                minWidth: 100,
+                padding: isMobile ? '8px 10px' : '16px 24px',
+                maxWidth: isMobile ? 110 : undefined,
+                minWidth: isMobile ? undefined : 100,
                 boxShadow: `4px 4px 0 ${color}`,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
               }}
             >
-              <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '2rem', fontWeight: 900, color, lineHeight: 1 }}>
+              <div style={{ fontFamily: 'Playfair Display, serif', fontSize: isMobile ? '18px' : '2rem', fontWeight: 900, color, lineHeight: 1 }}>
                 {label}
               </div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#0A1628', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: 4 }}>
+              <div style={{ fontSize: isMobile ? '9px' : '0.75rem', fontWeight: 600, color: '#0A1628', opacity: 0.6, textTransform: 'uppercase', letterSpacing: isMobile ? '0.06em' : '0.5px', marginTop: 4 }}>
                 {sub}
               </div>
             </div>
           ))}
         </motion.div>
 
+        {editMode && <CopyBtn k="content" color="#FF2D87" />}
+        </div>{/* end content group */}
+
         {/* Scroll cue */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}
-          style={{ marginTop: 64 }}
+          style={{ marginTop: isMobile ? 64 : 32 }}
         >
           <motion.div
             animate={{ y: [0, 8, 0] }}
@@ -293,7 +266,7 @@ export default function Hero() {
         left: 0,
         right: 0,
         height: 8,
-        background: 'linear-gradient(to right, #2B4EFF, #FF2D87, #FFD23F, #E8573A, #7FAF4E)',
+        background: 'linear-gradient(to right, #FF2D87, #FF2D87, #FFD23F, #FF5500, #7FAF4E)',
         zIndex: 3,
       }} />
     </section>
